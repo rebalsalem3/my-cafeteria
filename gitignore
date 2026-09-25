@@ -1,5 +1,5 @@
-.env
-__pycache__/
-*.pyc
 flask_session/
-database/cafe.db
+.env
+env/
+__pycache__/
+*.exe
