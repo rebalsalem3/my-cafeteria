@@ -13,13 +13,16 @@ from flask_socketio import join_room
 #  yes that was a quote as the name and pass
 # and a super admin called: "admin" with password: "admin123"
 
-load_dotenv()  # reads the .env file in the project folder and loads it into os.environ
+#load_dotenv()  # reads the .env file in the project folder and loads it into os.environ
 
 app = Flask(__name__)
 # Reads SECRET_KEY from .env (via load_dotenv above); falls back to a random
 # key each restart if .env is missing (fine for a quick test, but sessions
 # won't survive a server restart without a real key in .env).
-app.secret_key = os.environ.get("SECRET_KEY", os.urandom(24))
+
+
+#we put a secret key here for testing purposes and simplicity.
+app.secret_key = 'secret123'
 app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
