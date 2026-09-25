@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %} Reserve a table {% endblock %}
+{% block content %}
+<div class="container auth-page">
+    <div class="row justify-content-center">
+        <div class="col-12 col-sm-8 col-md-6 col-lg-4">
+            <div class="card auth-card p-4 p-md-5">
+                <h2 class="h3 text-center mb-4">Reserve a table🥂</h2>
+                <form action="/reserve" method="POST" onsubmit="this.querySelector('button[type=submit]').disabled = true;">
+                    <div class="mb-3">
+                        <label for="seats" class="form-label">Seats:</label>
+                        <input type="number" name="seats" id="seats" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="date" class="form-label">Date:</label>
+                        <input type="date" name="date" id="date" class="form-control" required>
+                    </div>
+                    <div class="mb-4">
+                        <label for="start_time" class="form-label">Time:</label>
+                        <input type="time" name="start_time" id="start_time" step="900" class="form-control" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Confirm reservation</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

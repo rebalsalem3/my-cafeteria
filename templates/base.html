@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css ">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <title>{% block title %} My Cafeteria {% endblock %}</title>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg cafe-navbar">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{{ url_for('menu') }}">My Cafeteria</a>
+            {% if session.get('user_id') %}
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#cafeNav" aria-controls="cafeNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="cafeNav">
+                <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-1">
+                    <li class="nav-item">
+                        <span class="navbar-text cafe-welcome">Welcome, {{ session['user_name'] }} &middot; Points: {{ session["points"] }}</span>
+                    </li>
+                    {% if request.endpoint != 'menu' %}
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('menu') }}">Menu</a></li>
+                    {% endif %}
+                    {% if request.endpoint != 'my_orders' %}
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('my_orders') }}">My Orders</a></li>
+                    {% endif %}
+                    {% if request.endpoint != 'cart' %}
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('cart') }}" id="cart_count">Cart ({{ session['cart']|length if session.get('cart') else 0 }})</a></li>
+                    {% endif %}
+                    {% if request.endpoint != 'change_password' %}
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('change_password') }}">Change Password</a></li>
+                    {% endif %}
+                    {% if request.endpoint != 'reviews' %}
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('reviews') }}">Reviews</a></li>
+                    {% endif %}
+                    {% if request.endpoint != 'view_reviews' %}
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('view_reviews') }}">My Reviews</a></li>
+                    {% endif %}
+                    {% if request.endpoint != 'reserve' %}
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for ('reserve') }}">Reserve a Table</a></li>
+                    {% endif %}
+                    {% if request.endpoint != 'my_reservations' %}
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('my_reservations') }}">My Reservations</a></li>
+                    {% endif %}
+                    {% if session.get('role') == 'admin' %}
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('dashboard') }}">Dashboard</a></li>
+                    {% endif %}
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('logout') }}">Logout</a></li>
+                </ul>
+            </div>
+            {% endif %}
+        </div>
+    </nav>
+
+     <main>
+        {% block content %}{% endblock %}
+    </main>
+        <footer>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="container mt-3 cafe-flash-container">
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ flash_class(category) }} alert-dismissible fade show cafe-flash" role="alert">
+                                <span class="cafe-flash-icon" aria-hidden="true">
+                                    {% if flash_class(category) == 'success' %}&#10003;
+                                    {% elif flash_class(category) == 'warning' %}&#9888;
+                                    {% elif flash_class(category) == 'danger' %}&#10007;
+                                    {% else %}&#8505;
+                                    {% endif %}
+                                </span>
+                                <span class="cafe-flash-text">{{ message }}</span>
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+            <br><br>
+            <p>&copy; 2026 My Cafeteria. All rights reserved.</p>
+        </footer>
+   
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+
+<script>
+    const socket = io();
+
+    const readyAudio = new Audio('/static/audio/order_ready.mp3?nocache=' + Date.now());
+
+    document.addEventListener('click', () => {
+        readyAudio.play().then(() => {
+            readyAudio.pause();
+            readyAudio.currentTime = 0;
+        }).catch(() => {});
+    }, { once: true });
+
+    socket.on('cart_updated', function(data) {
+        console.log('Cart updated event received from the server', data)
+        refreshCart(data.cart_count)
+    });
+
+    function refreshCart(count) {
+        const cartCount = document.getElementById('cart_count')
+        if (cartCount) {
+            cartCount.innerText = `Cart (${count})`
+        }
+    }
+    
+let isShowingNotification = false;
+let recheckPending = false;
+
+const extractOrderNumber = (message) => {
+    const match = message.match(/#(\d+)/);
+    return match ? match[1] : message;
+};
+
+const fetchAndShowReadyOrders = () => {
+    if (isShowingNotification) {
+        recheckPending = true;
+        return;
+    }
+
+    fetch('/api/check_active_orders')
+        .then(response => response.json())
+        .then(data => {
+            const notifications = data.ready_notifications || [];
+            if (notifications.length === 0) return;
+
+            isShowingNotification = true;
+            const orderIds = [...new Set(notifications.map(n => extractOrderNumber(n.message)))];
+
+            readyAudio.play().catch(error => {
+                console.log("could not play audio:", error);
+            });
+
+            const bodyText = orderIds.length === 1
+                ? `Order #${orderIds[0]} is ready for pickup.`
+                : `Orders ${orderIds.map(id => `#${id}`).join(', ')} are ready for pickup.`;
+
+            Swal.fire({
+                title: '🔔 Order up!',
+                text: bodyText,
+                icon: 'success',
+                confirmButtonText: 'Thanks!',
+                buttonsStyling: false,
+                customClass: {
+                    popup: 'cafe-swal-popup',
+                    title: 'cafe-swal-title',
+                    htmlContainer: 'cafe-swal-text',
+                    confirmButton: 'cafe-swal-confirm'
+                }
+            }).then(() => {
+                isShowingNotification = false;
+                if (recheckPending) {
+                    recheckPending = false;
+                    fetchAndShowReadyOrders();
+                }
+            });
+        })
+        .catch(error => console.error('Error checking orders:', error));
+};
+
+socket.on('order_ready', function(data) {
+    console.log("Order ready event received:", data);
+    fetchAndShowReadyOrders();
+});
+</script>
+</body>
+</html>

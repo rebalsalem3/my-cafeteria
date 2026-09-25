@@ -1,0 +1,70 @@
+{% extends "dashboard.html" %}
+
+{% block title %} Reports {% endblock %}
+
+{% block content %}
+<div class="container reports-page">
+    <h2 class="mb-4">Daily Reports</h2>
+
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="card stat-card stat-card--pending">
+                <div class="card-body">
+                    <span class="stat-label">Pending Orders</span>
+                    <p class="stat-value">{{ pending_orders }}</p>
+                </div>
+            </div>
+        </div>
+         <div class="col-md-4">
+            <div class="card stat-card stat-card--preparing">
+                <div class="card-body">
+                    <span class="stat-label">Preparing Orders</span>
+                    <p class="stat-value">{{ preparing_orders }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card stat-card stat-card--orders h-100">
+                <div class="card-body">
+                    <span class="stat-label">Completed Orders</span>
+                    <p class="stat-value">{{ completed_orders }}</p>
+                </div>
+            </div>
+        </div>
+         <div class="col-md-4">
+            <div class="card stat-card stat-card--items">
+                <div class="card-body">
+                    <span class="stat-label">Total Items</span>
+                    <p class="stat-value">{{ total_items }}</p>
+                </div>
+            </div>
+        </div>
+         <div class="col-md-4">
+            <div class="card stat-card stat-card--t_orders">
+                <div class="card-body">
+                    <span class="stat-label">Total Orders</span>
+                    <p class="stat-value">{{ total_orders }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card stat-card stat-card--revenue h-100">
+                <div class="card-body">
+                    <span class="stat-label">Total Revenue</span>
+                    <p class="stat-value">{{ total_revenue }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card stat-card stat-card--top-item h-100">
+                <div class="card-body">
+                    <span class="stat-label">Most Ordered Item</span>
+                    <p class="stat-value stat-value--text">{{ top_item }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <h5 class="mb-0">To see All Orders for this week: <a href="{{ url_for('all_orders') }}" class="btn btn-primary btn-sm">All Orders</a></h5>
+</div>
+{% endblock %}

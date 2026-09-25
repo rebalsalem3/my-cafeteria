@@ -1,0 +1,216 @@
+{% extends "dashboard.html" %}
+
+{% block title %} kitchen {% endblock %}
+
+{% block content %}
+<div class="container-fluid kitchen-page">
+    <h2 class="mb-4 text-center">👨‍🍳 Kanban Board</h2>
+
+    <div class="row g-4">
+        <!-- Pending Column -->
+        <div class="col-md-4">
+            <h4 class="kanban-column-header status-pending">Pending ⏳</h4>
+            <div id="col-pending" class="kanban-column">
+                {% for order in pending_orders %}
+                <div class="card mb-3 shadow-sm order-card status-pending" id="order-{{ order.id }}">
+                    <div class="card-body">
+                        <h5 class="card-title">#Order{{ order.id }}</h5>
+                        <p class="card-text"><strong>Customer:</strong> {{ order.user_name }}</p>
+                        <p class="card-text"><strong>Details:</strong></p>
+                        <ul>   
+                            {% for item in order['items'] %}
+                                <li>{{ item['name'] }} (x{{ item['quantity'] }})</li>
+                            {% endfor %}
+                        </ul>
+
+                        <button class="btn btn-primary btn-sm w-100 status-btn" data-order-id="{{ order.id }}" data-new-status="preparing">
+                            Prepare 🍳
+                        </button>
+                    </div>
+                </div>
+                {% else %}
+                <p class="kanban-empty">No pending orders 🎉</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Preparing Column -->
+        <div class="col-md-4">
+            <h4 class="kanban-column-header status-preparing">Preparing 🍳</h4>
+            <div id="col-preparing" class="kanban-column">
+                {% for order in preparing_orders %}
+                <div class="card mb-3 shadow-sm order-card status-preparing" id="order-{{ order.id }}">
+                    <div class="card-body">
+                        <h5 class="card-title">Order#{{ order.id }}</h5>
+                        <p class="card-text"><strong>Customer:</strong> {{ order.user_name }}</p>
+                        <p class="card-text"><strong>Details:</strong> </p>
+                        <ul>   
+                            {% for item in order['items'] %}
+                                <li>{{ item['name'] }} (x{{ item['quantity'] }})</li>
+                            {% endfor %}
+                        </ul>
+                        
+                        <button class="btn btn-success btn-sm w-100 status-btn" data-order-id="{{ order.id }}" data-new-status="completed">
+                           Order is ready ✅
+                        </button>
+                    </div>
+                </div>
+                {% else %}
+                <p class="kanban-empty">Nothing in the pan yet 🍳</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Ready for Pickup Column -->
+        <div class="col-md-4">
+            <h4 class="kanban-column-header status-ready">Ready for Pickup ✅</h4>
+            <div id="col-ready" class="kanban-column">
+                {% for order in completed_orders %}
+                <div class="card mb-3 shadow-sm order-card status-ready" id="order-{{ order.id }}">
+                    <div class="card-body">
+                        <h5 class="card-title">Order#{{ order.id }}</h5>
+                        <p class="card-text"><strong>Customer:</strong> {{ order.user_name }}</p>
+                        <p class="card-text"><strong>Details:</strong></p>
+                        <ul>   
+                            {% for item in order['items'] %}
+                                <li>{{ item['name'] }} (x{{ item['quantity'] }})</li>
+                            {% endfor %}
+                        </ul>
+                        
+                        <button class="btn btn-success btn-sm w-100 status-btn" data-order-id="{{ order.id }}" data-new-status="delivered">
+                            delivered ✅
+                        </button>
+                    </div>
+                </div>
+                {% else %}
+                <p class="kanban-empty">Nothing ready yet ✅</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function renderOrderItems(items) {
+        return (items || []).map(item => (
+            `<li>${item.name} (x${item.quantity})</li>`
+        )).join('');
+    }
+
+    function generateOrderCard(order) {
+        return `
+            <div class="card mb-3 shadow-sm order-card status-pending" id="order-${order.id}">
+                <div class="card-body">
+                    <h5 class="card-title">#Order${order.id}</h5>
+                    <p class="card-text"><strong>Customer:</strong> ${order.user_name}</p>
+                    <p class="card-text"><strong>Details:</strong></p>
+                    <ul>${renderOrderItems(order.items)}</ul>
+                    <button class="btn btn-primary btn-sm w-100 status-btn" data-order-id="${order.id}" data-new-status="preparing">
+                        Prepare 🍳
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+
+    function bindStatusButton(button) {
+        button.addEventListener('click', () => {
+            updateStatus(button.dataset.orderId, button.dataset.newStatus);
+        });
+    }
+
+    function moveCardToTop(columnId, card) {
+        const column = document.getElementById(columnId);
+        column.insertBefore(card, column.firstChild);
+    }
+
+    function refreshKitchen() {
+        fetch('/api/new_orders')
+            .then(response => response.json())
+            .then(data => {
+                const pendingContainer = document.getElementById('col-pending');
+                const pendingOrders = Array.isArray(data.pending_orders) ? data.pending_orders : [];
+                const emptyPlaceholder = pendingContainer.querySelector('.kanban-empty');
+                
+                if (emptyPlaceholder && pendingOrders.length) {
+                    emptyPlaceholder.remove();
+                }
+
+                pendingOrders.forEach(order => {
+                    if (document.getElementById(`order-${order.id}`)) {
+                        return;
+                    }
+
+                    const cardHTML = generateOrderCard(order);
+                    pendingContainer.insertAdjacentHTML('afterbegin', cardHTML);
+                    const newButton = pendingContainer.querySelector(`#order-${order.id} .status-btn`);
+                    if (newButton) {
+                        bindStatusButton(newButton);
+                    }
+                });
+            })
+            .catch(error => {
+                console.error('Error refreshing kitchen orders:', error);
+            });
+    }
+
+    function updateStatus(orderId, newStatus) {
+        fetch('/admin/update_status', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                order_id: orderId,
+                new_status: newStatus
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const card = document.querySelector(`#order-${orderId}`);
+                if (!card) return;
+
+                const button = card.querySelector('button');
+
+                if (newStatus === 'preparing') {
+                    moveCardToTop('col-preparing', card);
+                    card.classList.remove('status-pending');
+                    card.classList.add('status-preparing');
+                    button.className = "btn btn-success btn-sm w-100 status-btn";
+                    button.dataset.newStatus = 'completed';
+                    button.innerHTML = "Order is ready ✅";
+                } else if (newStatus === 'completed') {
+                    moveCardToTop('col-ready', card);
+                    card.classList.remove('status-preparing');
+                    card.classList.add('status-ready');
+                    button.className = "btn btn-success btn-sm w-100 status-btn";
+                    button.dataset.newStatus = "delivered";
+                    button.innerHTML = "delivered ✅";
+                } else if (newStatus === 'delivered') {
+                    card.remove();
+                }
+            } else {
+                alert('Error updating order status.');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error connecting to server. Please try again later.');
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.status-btn').forEach((button) => {
+            bindStatusButton(button);
+        });
+
+        if (typeof socket !== 'undefined') {
+            socket.on('new_order', function() {
+                console.log("New order event received from the server");
+                refreshKitchen();
+            });
+        }
+    });
+</script>
+{% endblock %}

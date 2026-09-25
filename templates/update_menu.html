@@ -1,0 +1,55 @@
+{% extends "dashboard.html" %}
+
+{% block title %} Menu Management {% endblock %}
+
+{% block content %}
+<section class="admin-page menu-management-page">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+            <h1 class="mb-0">Menu Management</h1>
+            <a href="{{ url_for('add_item') }}" class="btn btn-primary">+ Add New Item</a>
+        </div>
+
+        {% if items %}
+        <div class="table-responsive">
+            <table class="table align-middle">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Description</th>
+                        <th>Category</th>
+                        <th>Price</th>
+                        <th class="text-center">Update</th>
+                        <th class="text-center">Remove</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in items %}
+                    <tr>
+                        <td class="fw-semibold">{{ item['name'] }}</td>
+                        <td class="menu-desc-cell">{{ item['description'] }}</td>
+                        <td><span class="category-badge">{{ item['category'] }}</span></td>
+                        <td><span class="price-badge">${{ item['price'] }}</span></td>
+                        <td class="text-center">
+                            <form action="/update_item" method="POST">
+                                <input type="hidden" name="item_id" value="{{ item['id'] }}">
+                                <button type="submit" class="btn btn-primary btn-sm">Update</button>
+                            </form>
+                        </td>
+                        <td class="text-center">
+                            <form action="/remove_item" method="POST" onsubmit="return confirm('Remove {{ item.name }} from the menu?');">
+                                <input type="hidden" name="item_id" value="{{ item['id'] }}">
+                                <button type="submit" class="btn btn-outline-danger btn-sm">Remove</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-center text-glass-muted py-5 mb-0">No menu items yet. Add your first item to get started.</p>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

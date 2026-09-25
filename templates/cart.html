@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% block title %} My Cart {% endblock %}
+
+{% block content %}
+<div class="container cart-page">
+    <h2 class="mb-4">Your Cart</h2>
+
+    <div class="list-group mb-4" id="cart-table-body">
+        {% if items %}
+            {% for item in items %}
+                <div class="list-group-item cart-item d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div class="cart-item-info">
+                        <h6 class="mb-1">{{ item['name'] }}</h6>
+                        <span class="badge price-badge">{{ format_price(item['price']) }}$</span>
+                        <span class="badge qty-badge">x{{ item['quantity'] }}</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-3">
+                        <span class="badge subtotal-badge">{{ format_price(item['subtotal']) }}$</span>
+                        <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeItem(`{{ item['id'] }}`)">Remove from Cart</button>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="list-group-item text-center text-muted">Your cart is empty.</div>
+        {% endif %}
+    </div>
+
+    <div class="cart-summary d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <h3 id="cart-total" class="mb-0" {% if not items %}style="display: none;"{% endif %}>Total: {{ total }}$</h3>
+        <form id="checkout-form" action="/checkout" method="POST" {% if not items %}style="display: none;"{% endif %}>
+            <button type="submit" class="btn btn-primary btn-lg">Confirm Order</button>
+        </form>
+    </div>
+</div>
+
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+        
+        if (typeof socket !== 'undefined') {
+            
+            socket.on('new_order', function() {
+                console.log('Cart updated event (checkout) received from the server');
+                location.reload();
+            });
+
+            socket.on('cart_updated', function() {
+                console.log("Cart updated event received from server");
+                refreshCartSilently();
+            });
+        }
+
+        const checkoutForm = document.getElementById('checkout-form');
+        if (checkoutForm) {
+            checkoutForm.addEventListener('submit', function() {
+                const btn = checkoutForm.querySelector('button[type="submit"]');
+                if (btn) {
+                    btn.disabled = true;
+                    btn.innerText = 'Placing order...';
+                }
+                // form still submits normally — this just blocks a second click
+            });
+        }
+    });
+
+        function refreshCartSilently() {
+            fetch('/cart', {
+                method: 'POST',
+            })
+                .then(response => response.json())
+                .then(data => {
+                    const list = document.getElementById('cart-table-body');
+                    const totalElement = document.getElementById('cart-total');
+                    const checkoutForm = document.getElementById('checkout-form');
+
+                    if (list) {
+                        list.innerHTML = '';
+                    }
+
+                    if (!data || !data.items || data.items.length === 0) {
+                        if (list) {
+                            list.innerHTML = '<div class="list-group-item text-center text-muted">Your cart is empty.</div>';
+                        }
+                        if (totalElement) totalElement.style.display = 'none';
+                        if (checkoutForm) checkoutForm.style.display = 'none';
+                        return;
+                    }
+                    
+                    if (totalElement) {
+                        totalElement.innerText = `Total: ${data.total_price}$`;
+                        totalElement.style.display = 'block';
+                    }
+                    if (checkoutForm) {
+                        checkoutForm.style.display = 'block';
+                    }
+                        
+                    data.items.forEach(item => {
+                        const itemHTML = `
+                            <div class="list-group-item cart-item d-flex justify-content-between align-items-center flex-wrap gap-2">
+                                <div class="cart-item-info">
+                                    <h6 class="mb-1">${item.name}</h6>
+                                    <span class="badge price-badge">${item.price}$</span>
+                                    <span class="badge qty-badge">x${item.quantity}</span>
+                                </div>
+                                <div class="d-flex align-items-center gap-3">
+                                    <span class="badge subtotal-badge">${item.subtotal}$</span>
+                                    <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeItem('${item.id}')">Remove from Cart</button>
+                                </div>
+                            </div>
+                        `;
+                        list.innerHTML += itemHTML;
+                    });
+                })
+                .catch(err => console.error('Error updating cart: ', err));
+        }
+
+        function removeItem(itemId) {
+            const formData = new FormData();
+            formData.append('item_id', itemId);
+
+            fetch('/cart', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (response.ok) {
+                    console.log("Item removed successfully");
+                }
+            })
+            .catch(error => console.error('Error removing item:', error));
+        }
+    </script>
+{% endblock %}

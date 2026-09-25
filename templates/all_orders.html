@@ -1,0 +1,61 @@
+{% extends "dashboard.html" %}
+
+{% block title %}Week's Orders{% endblock %}
+
+{% block content %}
+<section class="admin-page orders-admin-page">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-end flex-wrap gap-2 mb-4">
+            <h1 class="mb-0">Week's Orders</h1>
+            <span class="orders-summary-note">Last 7 days &middot; {{ orders|length }} order{{ 's' if orders|length != 1 else '' }}</span>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table align-middle">
+                <thead>
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Status</th>
+                        <th>Customer</th>
+                        <th>Items</th>
+                        <th class="text-end">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if orders|length == 0 %}
+                        <tr>
+                            <td colspan="5" class="text-center py-4">No orders found in the last 7 days.</td>
+                        </tr>
+                    {% else %}
+                        {% for order in orders %}
+                        <tr>
+                            <td>#{{ order.id }}</td>
+                            <td>
+                                {% if order.status == 'pending' %}
+                                    <span class="badge bg-warning text-dark">Pending</span>
+                                {% elif order.status == 'preparing' %}
+                                    <span class="badge bg-info">Preparing</span>
+                                {% elif order.status == 'completed' %}
+                                    <span class="badge bg-success">Completed</span>
+                                {% elif order.status in ['delivered', 'delivered'] %}
+                                    <span class="badge bg-primary">Delivered</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">{{ order.status|capitalize }}</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ order.user_name }}</td>
+                            <td class="order-items-cell">
+                                {% for item in order['items'] %}
+                                    <div>{{ item['quantity'] }}&times; {{ item['name'] }} <span class="order-item-price">(${{ item['price'] }})</span></div>
+                                {% endfor %}
+                            </td>
+                            <td class="text-end fw-semibold">${{ order.total_price }}</td>
+                        </tr>
+                        {% endfor %}
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+{% endblock %}

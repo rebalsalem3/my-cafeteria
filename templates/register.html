@@ -1,0 +1,36 @@
+{% extends "layout.html" %}
+{% block head %}
+    <title>Register</title>
+{% endblock %}
+{% block content %}
+<div class="container auth-page">
+    <div class="row justify-content-center">
+        <div class="col-12 col-sm-8 col-md-6 col-lg-4">
+            <div class="card auth-card p-4 p-md-5">
+                <h1 class="h3 text-center mb-4">Register</h1>
+                {% if message %}
+                    <div class="alert alert-danger cafe-flash" role="alert">
+                        <span class="cafe-flash-icon" aria-hidden="true">&#10007;</span>
+                        <span class="cafe-flash-text">{{ message }}</span>
+                    </div>
+                {% endif %}
+                <form action="/register" method="post">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Username:</label>
+                        <input type="text" autofocus class="form-control" id="username" name="username" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Password:</label>
+                        <input type="password" class="form-control" id="password" name="password" required>
+                    </div>
+                    <div class="mb-4">
+                        <label for="confirm_password" class="form-label">Confirm Password:</label>
+                        <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+                    </div>
+                    <input type="submit" class="btn btn-primary w-100" value="Register">
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

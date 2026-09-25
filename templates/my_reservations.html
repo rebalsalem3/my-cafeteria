@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% block title %} My Reservations {% endblock %}
+
+{% block content %}
+<div class="container reservations-page">
+    <h2 class="mb-4 text-center"> My Reservations </h2>
+
+    {% if not reservations %}
+        <div class="text-center text-muted py-5">
+            <p class="fs-5 mb-3">You don't have any table reservations yet.</p>
+            <a href="/reserve" class="btn btn-primary">Book a Table Now</a>
+        </div>
+    {% else %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>Seats</th>
+                        <th>Date</th>
+                        <th>Time</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for res in reservations %}
+                    <tr>
+                        <td>{{ res.seats }} Seats</td>
+                        <td>{{ res.date }}</td>
+                        <td>{{ res.start_time }} - {{ res.end_time }}</td>
+                        <td>
+                            {% if res.status == 'booked' %}
+                                <span class="badge bg-success">Upcoming</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Finished</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+<script>
+    const socket = io();
+
+    socket.on('refresh_reservations', function() {
+        console.log("A table became available/booked! Updating user view");
+        location.reload();
+    });
+</script>
+
+{% endblock %}

@@ -1,0 +1,29 @@
+{% extends "layout.html" %}
+
+{% block title %} Welcome {% endblock %}
+
+{% block content %}
+<div class="container auth-page">
+    <div class="text-center mb-5">
+        <h1 class="display-5">Welcome to My Cafeteria</h1>
+        <p class="lead text-muted">Please login or register to continue.</p>
+    </div>
+
+    <div class="row justify-content-center g-4">
+        <div class="col-12 col-sm-6 col-lg-4">
+            <div class="card auth-option-card h-100 text-center p-4">
+                <h2 class="h5">already have an account?</h2>
+                <a href="{{ url_for('login') }}" class="btn btn-primary mt-3"> Login</a>
+            </div>
+        </div>
+        <div class="col-12 col-sm-6 col-lg-4">
+            <div class="card auth-option-card h-100 text-center p-4">
+                <h2 class="h5">you don't have an account?</h2>
+                <a href="{{ url_for('register') }}" class="btn btn-secondary mt-3"> Register</a>
+            </div>
+        </div>
+    </div>
+
+    <h4 class="text-center text-muted mt-5">hope you enjoy :)</h4>
+</div>
+{% endblock %}

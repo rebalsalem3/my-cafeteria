@@ -1,0 +1,130 @@
+{% extends 'dashboard.html' %}
+{% block title %} Admin_Reservations {% endblock %}
+
+{% block content %}
+<div class="container reservations-page">
+    <h2 class="mb-4">Reservations Overview</h2>
+
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Customer</th>
+                    <th>Table Number</th>
+                    <th>Seats</th>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="reservations-container">
+                {% if reservations %}
+                    {% for res in reservations %}
+                        <tr>
+                            <td>{{ res.id }}</td>
+                            <td>{{ res.user_name }}</td>
+                            <td>Table {{ res.table_number }}</td>
+                            <td>{{ res.seats }}</td>
+                            <td>{{ res.date }}</td>
+                            <td>{{ res.start_time }} - {{ res.end_time }}</td>
+                            <td>
+                                {% if res.status == 'booked' %}
+                                    <span class="badge bg-danger">Booked</span>
+                                {% else %}
+                                    <span class="badge bg-success">Available</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if res.status == 'booked' %}
+                                    <button type="button" class="btn btn-success btn-sm" onclick="makeAvailable('{{ res.id }}')">Make Available</button>
+                                {% endif %}
+                            </td>
+                        </tr>
+
+                    {% endfor %}
+                {% else %}
+                    <tr><td colspan="8" class="text-center text-muted py-4">No booked reservations available.</td></tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+    if (typeof socket !== 'undefined') {
+        socket.on('reservations_update', function() {
+            console.log("Reservation updated event received from the server");
+            refreshReservationsSilently();
+        });
+    }
+});
+
+    document.addEventListener("DOMContentLoaded", function() {
+        refreshReservationsSilently();
+    });
+    </script>
+    <script>
+
+    function refreshReservationsSilently() {
+        fetch('/api/admin/reservations', {
+            method: 'GET',
+        })
+            .then(response => response.json())
+            .then(data => {
+                const container = document.getElementById('reservations-container');
+                container.innerHTML = '';
+
+                if (!data || !data.items || data.items.length === 0) {
+                    container.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-4">No booked reservations available.</td></tr>';
+                    return;
+                }
+
+                data.items.forEach(item => {
+                    const isBooked = item.status === 'booked';
+                    const statusBadge = isBooked
+                        ? '<span class="badge bg-danger">Booked</span>'
+                        : '<span class="badge bg-success">Available</span>';
+                    const actionCell = isBooked
+                        ? `<button type="submit" class="btn btn-success btn-sm" onclick="makeAvailable('${item.id}')">Make Available</button>`
+                        : '';
+
+                    const rowHTML = `
+                        <tr>
+                            <td>${item.id || ''}</td>
+                            <td>${item.user_name || ''}</td>
+                            <td>${'Table ' + (item.table_number || '')}</td>
+                            <td>${item.seats || ''}</td>
+                            <td>${item.date || ''}</td>
+                            <td>${item.start_time || ''} - ${item.end_time || ''}</td>
+                            <td>${statusBadge}</td>
+                            <td>${actionCell}</td>
+                        </tr>
+                    `;
+                    container.innerHTML += rowHTML;
+                });
+            })
+            .catch(err => console.error('Error updating reservations: ', err));
+    }
+
+    function makeAvailable(reservationId) {
+        // create a FormData object to send the item ID to the server
+        const formData = new FormData();
+        formData.append('reservation_id', reservationId);
+
+        // send a POST request to the server to remove the item from the cart
+        fetch('/admin/reservations', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            if (response.ok) {
+                console.log("table made available successfully");
+            }
+        })
+        .catch(error => console.error('Error making table available:', error));
+    }
+    </script>
+</div>
+{% endblock %}

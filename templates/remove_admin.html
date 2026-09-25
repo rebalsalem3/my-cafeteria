@@ -1,0 +1,39 @@
+{% extends "dashboard.html" %}
+
+{% block title %}Remove Admin{% endblock %}
+
+{% block content %}
+<div class="container admin-page">
+    <h1 class="mb-2">Remove Admin</h1>
+    <p class="text-muted mb-4">Select an admin to remove:</p>
+    {% if admins %}
+        <div class="table-responsive">
+            <table class="table align-middle">
+                <thead>
+                    <tr>
+                        <th>Admin ID</th>
+                        <th>Username</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for admin in admins %}
+                        <tr>
+                            <td>{{ admin.id }}</td>
+                            <td>{{ admin.user_name }}</td>
+                            <td>
+                                <form action="/remove_admin" method="POST" class="mb-0">
+                                    <input type="hidden" name="admin_id" value="{{ admin.id }}">
+                                    <button type="submit" class="btn btn-danger btn-sm">Remove</button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p class="text-muted">No admins found.</p>
+    {% endif %}
+</div>
+{% endblock %}

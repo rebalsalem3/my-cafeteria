@@ -1,0 +1,6 @@
+Flask==3.0.3
+cs50==9.3.4
+Flask-SocketIO==5.3.6
+Flask-Session==0.8.0
+Werkzeug==3.0.3
+python-dotenv==1.0.1
