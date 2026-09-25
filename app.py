@@ -503,7 +503,7 @@ def reports():
     else:
         completed_orders = 0    
 
-    total_items = db.execute("SELECT COUNT(*) AS count FROM menu_items")[0]['count']
+    total_items = db.execute("SELECT COUNT(*) AS count FROM menu_items is_available = TRUE")[0]['count']
     total_orders = db.execute("SELECT COUNT(*) AS t_orders FROM orders WHERE DATE(created_at) = DATE('now')")[0]['t_orders']
     total_revenue = db.execute("SELECT SUM(total_price) AS total FROM orders WHERE DATE(created_at) = DATE('now')")[0]['total']
     most_ordered = db.execute('''SELECT menu_items.name, SUM(order_items.quantity) AS total_quantity
