@@ -1,5 +1,0 @@
-flask_session/
-.env
-env/
-__pycache__/
-*.exe
